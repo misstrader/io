@@ -609,13 +609,12 @@
                 <button class="language-btn btn-outline" id="lang-en">English</button>
             </div>
             <div class="auth-buttons">
-                <button class=" auth-btn btn-outline login-btn">ورود</button>
-                <button class=" auth-btn btn-primary register-btn">ثبت نام</button>
+                <!-- توسط جاوااسکریپت پر می‌شود -->
             </div>
         </header>
         
         <div class="logo-container">
-            <img src="51D8C18B-603C-4B80-92F5-609229941BF4.png " alt="MWT Logo" class="logo">
+            <img src="https://i.ibb.co/VYvLqQk/mwt-logo.png" alt="MWT Logo" class="logo">
             <h1 class="title">توانمندسازی سفر معاملاتی شما</h1>
             <p class="subtitle">Empowering your trade journey</p>
             <h2 class="founder">بنیانگذار مفهوم MWT</h2>
@@ -802,7 +801,6 @@
                 contact: "مسیر های ارتباطی",
                 login: "ورود",
                 register: "ثبت نام",
-                back: "بازگشت",
                 logout: "خروج",
                 motivationalTexts: [
                     "در دنیای پر از نوسان و فرصت‌های بی‌پایان بازارهای مالی، موفقیت تنها از آن کسانی است که جرئت می‌کنند قدم اول را بردارند، پشتکار دارند و همواره در مسیر یادگیری و رشد هستند. ترید کردن، هنر تحلیل و تصمیم‌گیری در لحظه‌های حساس است که می‌تواند زندگی شما را متحول کند.",
@@ -843,7 +841,6 @@
                 contact: "Contact Ways",
                 login: "Login",
                 register: "Register",
-                back: "Back",
                 logout: "Logout",
                 motivationalTexts: [
                     "In the world of volatile and endless opportunities in financial markets, success belongs only to those who dare to take the first step, persevere, and are constantly on the path of learning and growth. Trading is the art of analysis and decision-making in critical moments that can transform your life.",
@@ -876,6 +873,27 @@
             }
         };
         
+        // تابع به‌روزرسانی رابط کاربری برای کاربران وارد شده
+        function updateUIForLoggedInUser() {
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                const authButtons = document.querySelector('.auth-buttons');
+                const currentLang = document.documentElement.lang;
+                const t = translations[currentLang];
+                
+                authButtons.innerHTML = `
+                    <button class="auth-btn btn-outline user-profile">
+                        <i class="fas fa-user"></i> ${userName}
+                    </button>
+                    <button class="auth-btn btn-outline" id="logout-btn">
+                        ${t.logout}
+                    </button>
+                `;
+                
+                document.getElementById('logout-btn').addEventListener('click', logout);
+            }
+        }
+        
         // تابع تغییر زبان
         function changeLanguage(lang) {
             document.documentElement.lang = lang;
@@ -896,23 +914,13 @@
             // به‌روزرسانی دکمه‌های ورود/ثبت نام/پروفایل
             const authButtons = document.querySelector('.auth-buttons');
             if (localStorage.getItem('isLoggedIn')) {
-                const userName = localStorage.getItem('userName');
-                authButtons.innerHTML = `
-                    <button class="auth-btn btn-outline user-profile">
-                        <i class="fas fa-user"></i> ${userName}
-                    </button>
-                    <button class="auth-btn btn-outline" id="logout-btn">
-                        ${t.logout}
-                    </button>
-                `;
-                document.getElementById('logout-btn').addEventListener('click', logout);
+                updateUIForLoggedInUser();
             } else {
                 authButtons.innerHTML = `
                     <button class="auth-btn btn-outline login-btn">${t.login}</button>
                     <button class="auth-btn btn-primary register-btn">${t.register}</button>
                 `;
                 
-                // اضافه کردن رویداد برای دکمه‌های جدید
                 document.querySelector('.login-btn').addEventListener('click', () => {
                     document.getElementById('login-modal').style.display = 'flex';
                 });
@@ -949,12 +957,105 @@
             document.querySelector('footer').textContent = t.footer;
         }
         
-        langFa.addEventListener('click', () => changeLanguage('fa'));
-        langEn.addEventListener('click', () => changeLanguage('en'));
+        // تابع خروج کاربر
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            location.reload();
+        }
+        
+        // مدیریت ثبت نام
+        const registerForm = document.getElementById('register-form');
+        if (registerForm) {
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentLang = document.documentElement.lang;
+                const t = translations[currentLang].register;
+                
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const phone = document.getElementById('reg-phone').value;
+                const password = document.getElementById('reg-password').value;
+                const confirmPassword = document.getElementById('reg-confirm').value;
+                
+                // پنهان کردن پیام‌های قبلی
+                document.getElementById('register-success').style.display = 'none';
+                document.getElementById('register-error').style.display = 'none';
+                
+                // بررسی تطابق رمز عبور
+                if (password !== confirmPassword) {
+                    document.getElementById('register-error').textContent = t.passwordMismatch;
+                    document.getElementById('register-error').style.display = 'block';
+                    return;
+                }
+                
+                // ذخیره اطلاعات کاربر به صورت جداگانه
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userPhone', phone);
+                localStorage.setItem('userPassword', password);
+                localStorage.setItem('registeredAt', new Date().toLocaleString());
+                localStorage.setItem('isLoggedIn', 'true');
+                
+                // نمایش پیام موفقیت
+                document.getElementById('register-success').textContent = t.success;
+                document.getElementById('register-success').style.display = 'block';
+                
+                // بستن مودال بعد از 3 ثانیه
+                setTimeout(() => {
+                    document.getElementById('register-modal').style.display = 'none';
+                    registerForm.reset();
+                    updateUIForLoggedInUser();
+                    changeLanguage(document.documentElement.lang);
+                }, 3000);
+            });
+        }
+        
+        // مدیریت ورود
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const currentLang = document.documentElement.lang;
+                const t = translations[currentLang].login;
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                // پنهان کردن پیام‌های قبلی
+                document.getElementById('login-success').style.display = 'none';
+                document.getElementById('login-error').style.display = 'none';
+                
+                // بررسی اطلاعات ورود
+                const savedEmail = localStorage.getItem('userEmail');
+                const savedPassword = localStorage.getItem('userPassword');
+                
+                if (email === savedEmail && password === savedPassword) {
+                    // نمایش پیام موفقیت
+                    document.getElementById('login-success').textContent = t.success;
+                    document.getElementById('login-success').style.display = 'block';
+                    
+                    // ذخیره وضعیت ورود
+                    localStorage.setItem('isLoggedIn', 'true');
+                    
+                    // بستن مودال بعد از 2 ثانیه
+                    setTimeout(() => {
+                        document.getElementById('login-modal').style.display = 'none';
+                        loginForm.reset();
+                        updateUIForLoggedInUser();
+                        changeLanguage(document.documentElement.lang);
+                    }, 2000);
+                } else {
+                    // نمایش خطا
+                    document.getElementById('login-error').textContent = t.error;
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            });
+        }
         
         // مدیریت بخش‌های کشویی
         const collapsibles = document.querySelectorAll('.collapsible');
-        
         collapsibles.forEach(collapsible => {
             collapsible.addEventListener('click', () => {
                 collapsible.classList.toggle('active');
@@ -1049,152 +1150,7 @@
             }
         }
         
-        // مدیریت مودال‌ها
-        const loginBtn = document.querySelector('.login-btn');
-        const registerBtn = document.querySelector('.register-btn');
-        const protectedRegisterBtn = document.querySelector('#protected-content .register-btn');
-        const accessRegisterBtn = document.querySelector('#access-message .register-btn');
-        const loginModal = document.getElementById('login-modal');
-        const registerModal = document.getElementById('register-modal');
-        const closeBtns = document.querySelectorAll('.close-btn');
-        
-        loginBtn?.addEventListener('click', () => {
-            loginModal.style.display = 'flex';
-        });
-        
-        registerBtn?.addEventListener('click', () => {
-            registerModal.style.display = 'flex';
-        });
-        
-        protectedRegisterBtn?.addEventListener('click', () => {
-            registerModal.style.display = 'flex';
-        });
-        
-        accessRegisterBtn?.addEventListener('click', () => {
-            registerModal.style.display = 'flex';
-        });
-        
-        closeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                loginModal.style.display = 'none';
-                registerModal.style.display = 'none';
-            });
-        });
-        
-        window.addEventListener('click', (e) => {
-            if (e.target === loginModal) {
-                loginModal.style.display = 'none';
-            }
-            if (e.target === registerModal) {
-                registerModal.style.display = 'none';
-            }
-        });
-        
-        // مدیریت ثبت نام
-        const registerForm = document.getElementById('register-form');
-        const registerSuccess = document.getElementById('register-success');
-        const registerError = document.getElementById('register-error');
-        
-        registerForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const currentLang = document.documentElement.lang;
-            const t = translations[currentLang].register;
-            
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const phone = document.getElementById('reg-phone').value;
-            const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm').value;
-            
-            // پنهان کردن پیام‌های قبلی
-            registerSuccess.style.display = 'none';
-            registerError.style.display = 'none';
-            
-            // بررسی تطابق رمز عبور
-            if (password !== confirmPassword) {
-                registerError.textContent = t.passwordMismatch;
-                registerError.style.display = 'block';
-                return;
-            }
-            
-            // ذخیره اطلاعات کاربر به صورت جداگانه
-            localStorage.setItem('userName', name);
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userPhone', phone);
-            localStorage.setItem('userPassword', password);
-            localStorage.setItem('registeredAt', new Date().toLocaleString());
-            
-            // نمایش پیام موفقیت
-            registerSuccess.textContent = t.success;
-            registerSuccess.style.display = 'block';
-            
-            // بستن مودال بعد از 3 ثانیه
-            setTimeout(() => {
-                registerModal.style.display = 'none';
-                registerForm.reset();
-                
-                // به‌روزرسانی رابط کاربری
-                checkRegistration();
-                changeLanguage(document.documentElement.lang);
-            }, 3000);
-        });
-        
-        // مدیریت ورود
-        const loginForm = document.getElementById('login-form');
-        const loginSuccess = document.getElementById('login-success');
-        const loginError = document.getElementById('login-error');
-        
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const currentLang = document.documentElement.lang;
-            const t = translations[currentLang].login;
-            
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            
-            loginSuccess.style.display = 'none';
-            loginError.style.display = 'none';
-            
-            // بررسی اطلاعات ورود
-            const savedEmail = localStorage.getItem('userEmail');
-            const savedPassword = localStorage.getItem('userPassword');
-            
-            if (email === savedEmail && password === savedPassword) {
-                // نمایش پیام موفقیت
-                loginSuccess.textContent = t.success;
-                loginSuccess.style.display = 'block';
-                
-                // ذخیره وضعیت ورود
-                localStorage.setItem('isLoggedIn', 'true');
-                
-                // بستن مودال بعد از 2 ثانیه
-                setTimeout(() => {
-                    loginModal.style.display = 'none';
-                    loginForm.reset();
-                    
-                    // به‌روزرسانی رابط کاربری برای کاربران وارد شده
-                    changeLanguage(document.documentElement.lang);
-                }, 2000);
-            } else {
-                // نمایش خطا
-                loginError.textContent = t.error;
-                loginError.style.display = 'block';
-            }
-        });
-        
-        // تابع خروج کاربر
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            location.reload();
-        }
-        
-        // مقداردهی اولیه
-        changeLanguage('fa');
-        checkRegistration();
-        
-        // اضافه کردن رویداد برای دکمه‌های ثبت نام در پیام دسترسی
+        // مدیریت دکمه‌های ثبت نام در پیام دسترسی
         document.querySelector('#protected-content .register-btn')?.addEventListener('click', () => {
             document.getElementById('register-modal').style.display = 'flex';
         });
@@ -1202,6 +1158,17 @@
         document.querySelector('#access-message .register-btn')?.addEventListener('click', () => {
             document.getElementById('register-modal').style.display = 'flex';
         });
+        
+        // مقداردهی اولیه
+        langFa.addEventListener('click', () => changeLanguage('fa'));
+        langEn.addEventListener('click', () => changeLanguage('en'));
+        
+        // بررسی وضعیت ورود کاربر هنگام بارگذاری صفحه
+        if (localStorage.getItem('isLoggedIn')) {
+            updateUIForLoggedInUser();
+        }
+        changeLanguage('fa');
+        checkRegistration();
     </script>
 </body>
 </html>
