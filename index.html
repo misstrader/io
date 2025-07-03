@@ -1036,8 +1036,7 @@
                     document.getElementById('login-success').textContent = t.success;
                     document.getElementById('login-success').style.display = 'block';
                     
-                    // ذخیره وضعیت ورود
-                    localStorage.setItem('isLoggedIn', 'true');
+                    
                     
                     // بستن مودال بعد از 2 ثانیه
                     setTimeout(() => {
@@ -1163,12 +1162,7 @@
         langFa.addEventListener('click', () => changeLanguage('fa'));
         langEn.addEventListener('click', () => changeLanguage('en'));
         
-        // بررسی وضعیت ورود کاربر هنگام بارگذاری صفحه
-        if (localStorage.getItem('isLoggedIn')) {
-            updateUIForLoggedInUser();
-        }
-        changeLanguage('fa');
-        checkRegistration();
+        
     </script>
 </body>
 </html>
